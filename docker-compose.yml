@@ -1,0 +1,28 @@
+version: '3.4'
+services:
+  rabbitmq:
+    restart: always
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=celeryman
+      - RABBITMQ_DEFAULT_PASS=pass1234
+      - RABBITMQ_DEFAULT_VHOST=celery_vhost
+    ports:
+      - "5672:5672"
+      - "8080:15672"
+  redis:
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379"
+  flower:
+    restart: always
+    image: chriskuan/flower
+    build: flower/.
+    links:
+      - rabbitmq
+    ports:
+      - "5555:5555"
+    environment:
+      - BASIC_AUTH=celeryman:pass1234
+      - BROKER_URL=amqp://celeryman:pass1234@rabbitmq:5672/celery_vhost
