@@ -17,12 +17,12 @@ services:
       - "6379:6379"
   flower:
     restart: always
-    image: chriskuan/flower
+    image: htkuan/flower
     build: flower/.
     links:
       - rabbitmq
     ports:
       - "5555:5555"
     environment:
-      - BASIC_AUTH=celeryman:pass1234
+      - FLOWER_BASIC_AUTH=celeryman:pass1234
       - BROKER_URL=amqp://celeryman:pass1234@rabbitmq:5672/celery_vhost
