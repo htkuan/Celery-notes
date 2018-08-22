@@ -334,3 +334,28 @@ Setting these up from within the on_after_configure handler means that we’ll n
 就是 hello.s() 與 add.s()，會在[進階用法](https://github.com/htkuan/Celery_notes/blob/master/advance.md)中說明，
 
 最後給定 queue 的名稱，可以把不同的 task 分流到不同的 queue 裡面。
+
+
+# How celery work with RabbitMQ
+
+每當啟動一個 celery worker， celery 會在 rabbitmq 上建立一個 queue 名稱的 exchange(direct)，
+
+和 celeryev 的 exchange(topic) 給 celery event 用，那會有 celeryev 就代表了 celery 會在
+
+worker 啟動時連同啟動一個 celery event 的 worker，
+
+然後 queue 則會建立 指定名稱的 queue (default=celery)，和一個 worker 的 queue (名稱 celery.pidbox 結尾)，
+
+跟一個 celery event 的 queue (名稱 celeryev 開頭);
+
+另一方面再啟動生產者的時候，不論是 celery beat 或是 發 apply_async()，
+
+celery 也會先判斷是否存在這個 queue 和 exchange，如果存在則直接使用，不存在則創建，
+
+大家可以開啟 rabbitmq management 網頁，觀察啟動不管是 生產者 或是 消費者時，
+
+celery 在 rabbitmq 上操作的行為，當然這些都是預設得情況，
+
+事實上 celery 在 rabbitmq 上建立的東西，都是可以設置調整的，
+
+比如說: 當 queue 沒有消費者或是生產者在工作時就自動刪除這類的回收機制，都是可以手動設定的。
