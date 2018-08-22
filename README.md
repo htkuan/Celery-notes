@@ -359,3 +359,50 @@ celery 在 rabbitmq 上操作的行為，當然這些都是預設得情況，
 事實上 celery 在 rabbitmq 上建立的東西，都是可以設置調整的，
 
 比如說: 當 queue 沒有消費者或是生產者在工作時就自動刪除這類的回收機制，都是可以手動設定的。
+
+# Broadcast
+
+廣播功能的目的是當 生產者 發出 task 到 queue 上，所有的 消費者都要拿到，
+
+而這個功能是利用 rabbitmq 上 fanout type 的 exchange 做到的。
+
+只要加上：
+```python
+from kombu.common import Broadcast
+
+app.conf.task_queue = (Broadcast('<queue_name>'),)
+``` 
+
+定義這個 queue 屬於廣播類型，實作上則是會再啟動 worker 的時候，
+
+因為這個設定而把創建的 exchange type 設為 fanout。
+
+讓我們來看看 bcast_worker1.py, bcast_worker2.py 和 bcast_producer.py
+
+打開三個終端分別啟動：
+
+```
+# no.1
+celery -A bcast_worker1 worker -Q bcast_q -n <worker_name1>
+# no.2
+celery -A bcast_worker2 worker -Q bcast_q -n <worker_name2>
+# no.3
+
+celery shell # 進入 shell
+>>> from bcast_producer import app
+>>> app.send_tesk('bcast', ('hi',), queue='bcast_q')
+```
+
+然後觀察兩個 worker 是否都有收到，
+
+這邊要注意的第一點 廣播形式的設定是 depand on worker 的，
+
+各位可以把 worker 關掉，也把 exchange 刪掉，直接發送 task，
+
+會發現 rabbitmq 上什麼事都沒發生，唯獨開啟 worker，celery 才會把配置
+
+設定上 rabbitmq，再來一點是這個教學為了清楚把不同的生產者跟消費者都做不同的配置
+
+但實際上的使用情況，常常會是跑同一份 code，這個時候啟動 celery 服務時要搞懂此時服務是什麼角色
+
+才不會搞不懂 celery 到底在幹嘛 
